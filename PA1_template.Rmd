@@ -1,25 +1,42 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+Reproducible Research: Peer Assessment 1 
+================================================================================================
+
+Loading and preprocessing the data
+
+```{r}
+
+library(ggplot2)
+file <- "activity.zip"
+data <- read.csv(unz(file,  "activity.csv"))
+data$date <- as.Date(data$date, format = "%Y-%m-%d")
+
+```
+
+### What is mean total number of steps taken per day?
+
+```{r, echo=FALSE }
+
+sumSteps <- aggregate(steps ~ as.Date(date), data, FUN=sum)
+hist(sumSteps$steps, xlab = "total num of steps per day", 
+     main = "Histogram of the total number of steps taken per day")
+abline(v = mean(sumSteps$steps, na.rm = TRUE), col = "red", lwd = 2 )
+abline(v = median(sumSteps$steps, na.rm = TRUE), col = "blue", lwd = 1 )
+meanSteps <- round(mean(sumSteps$steps, na.rm = TRUE), 2)
+
+```
+
+The mean total number of steps taken per day is `r meanSteps`
+
+### What is the average daily activity pattern?
+
+```{r , echo=FALSE}
 
 
-## Loading and preprocessing the data
+
+```
+
+### Imputing missing values
 
 
 
-## What is mean total number of steps taken per day?
-
-
-
-## What is the average daily activity pattern?
-
-
-
-## Imputing missing values
-
-
-
-## Are there differences in activity patterns between weekdays and weekends?
+### Are there differences in activity patterns between weekdays and weekends?
