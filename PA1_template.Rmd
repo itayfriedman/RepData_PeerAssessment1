@@ -5,38 +5,71 @@ Loading and preprocessing the data
 
 ```{r}
 
-library(ggplot2)
+Sys.setlocale("LC_TIME", "English")
 file <- "activity.zip"
-data <- read.csv(unz(file,  "activity.csv"))
-data$date <- as.Date(data$date, format = "%Y-%m-%d")
+df <- read.csv(unz(file,  "activity.csv"))
+df$date <- as.Date(df$date, format = "%Y-%m-%d")
 
 ```
 
 ### What is mean total number of steps taken per day?
 
-```{r, echo=FALSE }
+```{r}
 
-sumSteps <- aggregate(steps ~ as.Date(date), data, FUN=sum)
-hist(sumSteps$steps, xlab = "total num of steps per day", 
+sumSteps <- aggregate(steps ~ as.Date(date), data = df, FUN=sum)
+hist(sumSteps$steps, xlab = "total num of steps per day", breaks=30, 
      main = "Histogram of the total number of steps taken per day")
 abline(v = mean(sumSteps$steps, na.rm = TRUE), col = "red", lwd = 2 )
 abline(v = median(sumSteps$steps, na.rm = TRUE), col = "blue", lwd = 1 )
-meanSteps <- round(mean(sumSteps$steps, na.rm = TRUE), 2)
+meanSteps <- mean(sumSteps$steps, na.rm = TRUE)
 
 ```
 
-The mean total number of steps taken per day is `r meanSteps`
+The mean total number of steps taken per day is `r sprintf("%.2f", meanSteps)`
 
 ### What is the average daily activity pattern?
 
-```{r , echo=FALSE}
+```{r}
 
-
+stepsInterval_mean <- aggregate(steps ~ interval, data = df, FUN=mean)
+names(stepsInterval_mean) <- c("interval", "steps_mean")
+plot(stepsInterval_mean, type = "l", main="The average number of steps")
+maxStepsIntrval <- stepsInterval_mean$interval[which.max(stepsInterval_mean$steps_mean)]
 
 ```
 
+The 5-minute interval that contains the maximum number of steps is : `r maxStepsIntrval`
+
 ### Imputing missing values
 
+```{r}
 
+missing_values <- sum(is.na(df))
+dfNAajusted <- merge(df, stepsInterval_mean, by="interval")
+dfNAajusted$fixSteps <- ifelse(!is.na(dfNAajusted$steps), dfNAajusted$steps, dfNAajusted$steps_mean)
+sumSteps <- aggregate(steps ~ as.Date(date), data = dfNAajusted, FUN=sum)
+hist(sumSteps$steps, xlab = "total num of steps per day", breaks=30,
+     main = "Histogram of the total number of steps taken per day")
+abline(v = mean(sumSteps$steps, na.rm = TRUE), col = "red", lwd = 2 )
+abline(v = median(sumSteps$steps, na.rm = TRUE), col = "blue", lwd = 1 )
+meanSteps <- mean(sumSteps$steps, na.rm = TRUE)
+```
+
+The total number of rows with missing values in the dataset is : `r missing_values`
+
+
+New mean total number of steps taken per day is `r sprintf("%.2f", meanSteps)`
 
 ### Are there differences in activity patterns between weekdays and weekends?
+
+```{r}
+
+df$dayType <- weekdays(df$date)
+df$dayType <- ifelse (df$dayType == "Saturday" | df$dayType == "Sunday", c("weekend"), c("weekday"))
+stepsInt <- aggregate(steps ~ interval + dayType, data=df, FUN=mean)
+names(stepsInt) <- c("interval", "dayType", "steps")
+
+library(lattice)
+xyplot(steps ~ interval | dayType, stepsInt, type = "l", layout = c(1, 2))
+
+```
